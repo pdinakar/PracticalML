@@ -1,0 +1,72 @@
+---
+title: "Machine_Learning"
+author: "Paul D Sankaranarayanan"
+date: "2022-12-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading Human Activity Record (HAR) training and testing datasets
+```{r echo=FALSE, include=FALSE}
+library(ggplot2)
+library(caret)
+library(rattle)
+```
+```{r echo=FALSE}
+trfile <- "C:\\Users\\Dinakaran\\Downloads\\pml-training.csv"
+tstfile <- "C:\\Users\\Dinakaran\\Downloads\\pml-testing.csv"
+training <- read.csv(trfile)
+testing  <- read.csv(tstfile)
+training <- training[,colMeans(is.na(training)) < .9]
+training <- training[,-c(1:7)]
+nvz <- nearZeroVar(training)
+training <- training[,-nvz]
+dim(training)
+dim(testing)
+inTrain<-createDataPartition(y=training$classe,p=0.7,list=FALSE)
+train <- training[inTrain,]
+tpart <- training[-inTrain,]
+```
+## Model analysis with training data
+```{r echo=FALSE}
+set.seed(777)
+control <- trainControl(method="cv",number=10,verboseIter = F)
+fitRpart <- train(classe ~ .,method="rpart",data=train, trControl = control, tuneLength=6)
+prRpart <- predict(fitRpart,tpart)
+cmRpart <- confusionMatrix(prRpart, factor(tpart$classe))
+cmRpart$overall['Accuracy']
+```
+```{r echo=FALSE}
+fitRf <- train(classe ~ ., data=train, method="rf", trControl = control, tuneLength=6)
+prRf <- predict(fitRf, tpart)
+cmRf <- confusionMatrix(prRf, factor(tpart$classe))
+cmRf$overall['Accuracy']
+
+fitGbm <- train(classe ~ ., data=train, method="gbm", verbose=FALSE, trControl = control, tuneLength=6)
+prGbm <- predict(fitGbm, tpart)
+cmGbm <- confusionMatrix(prGbm, factor(tpart$classe))
+cmGbm$overall['Accuracy']
+
+fitLda <- train(classe ~ ., data=train, method="lda", trControl = control, tuneLength=6)
+prLda <- predict(fitLda, tpart)
+cmGbm <- confusionMatrix(prLda, factor(tpart$classe))
+cmGbm$overall['Accuracy']
+
+fancyRpartPlot(fitRpart$finalModel)
+```
+
+```{r}
+predTst <- predict(fitRf,testing)
+print(predTst)
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+plot(fitRf)
+plot(fitGbm)
+```
