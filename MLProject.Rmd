@@ -15,6 +15,11 @@ library(ggplot2)
 library(caret)
 library(rattle)
 ```
+## Read and clean training and testing files. 
+Clean data by removing NA columns and split Training csv file data into training and validation set. Run all experiments on Training set, predict with validation
+Data was used from  http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har
+
+Using classe variable as factor variable which provides the correct way and 5 other ways of performing the exercises wrong. Classe is predictor related factor variable to other variables in the dataset.
 ```{r echo=FALSE}
 trfile <- "C:\\Users\\Dinakaran\\Downloads\\pml-training.csv"
 tstfile <- "C:\\Users\\Dinakaran\\Downloads\\pml-testing.csv"
@@ -31,40 +36,48 @@ train <- training[inTrain,]
 tpart <- training[-inTrain,]
 ```
 ## Model analysis with training data
+
+Performing analysis with Trees, Random forest, Gradient boosting and Linear discriminant analysis
+From confusion matrix used Accuracy parameter to determine the best model and see that Randon forest is the best model.
 ```{r echo=FALSE}
 set.seed(777)
-control <- trainControl(method="cv",number=10,verboseIter = F)
+control <- trainControl(method="cv",number=3,verboseIter = F)
 fitRpart <- train(classe ~ .,method="rpart",data=train, trControl = control, tuneLength=6)
 prRpart <- predict(fitRpart,tpart)
 cmRpart <- confusionMatrix(prRpart, factor(tpart$classe))
 cmRpart$overall['Accuracy']
 ```
+### Randon Forest
 ```{r echo=FALSE}
 fitRf <- train(classe ~ ., data=train, method="rf", trControl = control, tuneLength=6)
 prRf <- predict(fitRf, tpart)
 cmRf <- confusionMatrix(prRf, factor(tpart$classe))
 cmRf$overall['Accuracy']
-
+```
+## Gradient boosting
+```{r echo=FALSE}
 fitGbm <- train(classe ~ ., data=train, method="gbm", verbose=FALSE, trControl = control, tuneLength=6)
 prGbm <- predict(fitGbm, tpart)
 cmGbm <- confusionMatrix(prGbm, factor(tpart$classe))
 cmGbm$overall['Accuracy']
-
+```
+### Linear discriminant analysis
+```{r echo=FALSE}
 fitLda <- train(classe ~ ., data=train, method="lda", trControl = control, tuneLength=6)
 prLda <- predict(fitLda, tpart)
 cmGbm <- confusionMatrix(prLda, factor(tpart$classe))
 cmGbm$overall['Accuracy']
-
+```
+## Tree Diagram
+```{r echo=FALSE}
 fancyRpartPlot(fitRpart$finalModel)
 ```
-
+## Predicting with Testing csv data using Random forest model
 ```{r}
 predTst <- predict(fitRf,testing)
 print(predTst)
 ```
 ## Including Plots
-
-You can also embed plots, for example:
 
 ```{r echo=FALSE}
 plot(fitRf)
